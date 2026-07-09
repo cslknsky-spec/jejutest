@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>제주의 민족 - 우리가 어떤 민족입니까</title>
+<style>
+  :root{
+    --mint:#00b3a4;          /* 제주 바다 민트 */
+    --mint-dark:#00998c;
+    --mint-light:#e6f7f5;
+    --orange:#ff7a3d;        /* 감귤 포인트 */
+    --ink:#1b1e21;
+    --gray:#8b95a1;
+    --line:#eef0f2;
+    --bg:#f4f6f8;
+    --star:#ffb400;
+    --radius:16px;
+    --shadow:0 6px 20px rgba(0,0,0,.06);
+    --shadow-lg:0 12px 32px rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,sans-serif;
+    background:#dfe3e7;color:var(--ink);
+    display:flex;justify-content:center;min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ===== 모바일 프레임 ===== */
+  .app{
+    width:100%;max-width:430px;background:var(--bg);
+    min-height:100vh;position:relative;overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,.15);
+    display:flex;flex-direction:column;
+  }
+  .screen{display:none;flex:1;flex-direction:column;padding-bottom:78px;}
+  .screen.active{display:flex;}
+  .scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
+
+  /* ===== 상단바 ===== */
+  .topbar{
+    background:var(--mint);color:#fff;padding:16px 18px 14px;
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar .loc{display:flex;align-items:center;gap:6px;font-weight:800;font-size:19px;cursor:pointer;}
+  .topbar .loc small{font-weight:500;opacity:.85;font-size:13px;}
+  .search{
+    margin-top:12px;background:#fff;border-radius:12px;
+    display:flex;align-items:center;gap:8px;padding:12px 14px;color:var(--gray);
+    font-size:15px;cursor:pointer;
+  }
+  .search svg{flex:none;}
+
+  /* ===== 히어로 배너 ===== */
+  .hero{
+    margin:14px 16px 0;border-radius:var(--radius);padding:20px;color:#fff;
+    background:linear-gradient(120deg,#00b3a4,#0090c9);position:relative;overflow:hidden;
+  }
+  .hero h2{margin:0 0 6px;font-size:21px;}
+  .hero p{margin:0;font-size:13px;opacity:.9;}
+  .hero .tangerine{position:absolute;right:-10px;bottom:-14px;font-size:96px;opacity:.28;}
+
+  /* ===== 카테고리 그리드 ===== */
+  .section-title{font-size:17px;font-weight:800;margin:22px 16px 12px;}
+  .cats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 2px;padding:0 10px;}
+  .cat{
+    background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:10px 4px;border-radius:12px;cursor:pointer;font-family:inherit;transition:.15s;
+  }
+  .cat:active{background:var(--mint-light);transform:scale(.96);}
+  .cat .emo{font-size:30px;}
+  .cat .nm{font-size:12.5px;font-weight:600;color:#3d4451;}
+
+  /* ===== 가게 리스트 ===== */
+  .filters{display:flex;gap:8px;padding:4px 16px 12px;overflow-x:auto;}
+  .filters::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:none;border:1px solid var(--line);background:#fff;border-radius:20px;
+    padding:8px 14px;font-size:13px;font-weight:600;color:#4a5158;cursor:pointer;font-family:inherit;
+  }
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .store{
+    display:flex;gap:14px;padding:16px;background:#fff;margin:0 16px 12px;
+    border-radius:var(--radius);box-shadow:var(--shadow);cursor:pointer;transition:.12s;
+    border:1px solid #fff;
+  }
+  .store:active{transform:scale(.99);border-color:var(--mint);}
+  .store .thumb{
+    width:84px;height:84px;border-radius:14px;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:40px;
+    background:var(--mint-light);
+  }
+  .store .info{flex:1;min-width:0;}
+  .store .nm{font-weight:800;font-size:16px;margin-bottom:4px;}
+  .store .meta{font-size:12.5px;color:var(--gray);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  .store .rate{color:var(--star);font-weight:700;}
+  .store .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
+  .store .tag{font-size:11px;background:#f1f3f5;color:#5a6270;padding:4px 8px;border-radius:6px;}
+  .store .tag.new{background:#fff0e8;color:var(--orange);font-weight:700;}
+  .badge-free{color:var(--mint-dark);font-weight:700;}
+
+  /* ===== 가게 상세 ===== */
+  .detail-head{position:relative;background:linear-gradient(120deg,#00b3a4,#0090c9);height:180px;color:#fff;}
+  .detail-head .back{
+    position:absolute;top:14px;left:12px;width:38px;height:38px;border-radius:50%;
+    background:rgba(0,0,0,.25);border:none;color:#fff;font-size:20px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .detail-head .bigemo{position:absolute;right:16px;bottom:8px;font-size:96px;opacity:.4;}
+  .detail-card{background:#fff;margin:-30px 16px 0;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);position:relative;}
+  .detail-card h1{margin:0 0 8px;font-size:22px;}
+  .detail-card .meta{font-size:13px;color:var(--gray);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .detail-card .sub{margin-top:12px;font-size:13px;color:#5a6270;display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px;}
+  .menu-group-title{font-size:16px;font-weight:800;margin:22px 16px 10px;}
+  .menu-item{
+    display:flex;gap:12px;padding:14px 16px;background:#fff;margin:0 16px 10px;border-radius:14px;
+    box-shadow:var(--shadow);cursor:pointer;transition:.12s;
+  }
+  .menu-item:active{background:var(--mint-light);}
+  .menu-item .mi-info{flex:1;}
+  .menu-item .mi-nm{font-weight:700;font-size:15px;}
+  .menu-item .mi-desc{font-size:12.5px;color:var(--gray);margin:4px 0 8px;line-height:1.4;}
+  .menu-item .mi-price{font-weight:800;font-size:15px;}
+  .menu-item .mi-thumb{width:70px;height:70px;border-radius:12px;background:var(--mint-light);display:flex;align-items:center;justify-content:center;font-size:34px;flex:none;}
+
+  /* ===== 장바구니 ===== */
+  .cart-line{display:flex;align-items:center;gap:12px;padding:16px;background:#fff;margin:0 16px 10px;border-radius:14px;box-shadow:var(--shadow);}
+  .cart-line .c-emo{font-size:32px;}
+  .cart-line .c-info{flex:1;}
+  .cart-line .c-nm{font-weight:700;font-size:15px;}
+  .cart-line .c-price{color:var(--gray);font-size:13px;margin-top:2px;}
+  .qty{display:flex;align-items:center;gap:10px;}
+  .qty button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:18px;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center;}
+  .qty span{min-width:18px;text-align:center;font-weight:700;}
+  .empty{text-align:center;padding:80px 20px;color:var(--gray);}
+  .empty .big{font-size:70px;margin-bottom:16px;}
+  .summary{background:#fff;margin:16px;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+  .summary .row{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;color:#4a5158;}
+  .summary .row.total{font-size:18px;font-weight:800;color:var(--ink);border-top:1px solid var(--line);margin-top:8px;padding-top:14px;}
+
+  /* ===== 하단 고정 결제 바 ===== */
+  .pay-bar{
+    position:absolute;bottom:78px;left:0;right:0;max-width:430px;margin:0 auto;
+    padding:12px 16px;background:transparent;
+  }
+  .pay-btn{
+    width:100%;background:var(--mint);color:#fff;border:none;border-radius:14px;
+    padding:17px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;
+    box-shadow:var(--shadow-lg);display:flex;justify-content:center;gap:8px;align-items:center;
+  }
+  .pay-btn:active{background:var(--mint-dark);}
+  .pay-btn:disabled{background:#c5ccd2;box-shadow:none;}
+
+  /* ===== 하단 네비 ===== */
+  .tabbar{
+    position:absolute;bottom:0;left:0;right:0;max-width:430px;margin:0 auto;
+    background:#fff;border-top:1px solid var(--line);display:flex;
+    padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:30;
+  }
+  .tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;cursor:pointer;color:var(--gray);font-family:inherit;position:relative;}
+  .tab .ti{font-size:22px;}
+  .tab .tl{font-size:11px;font-weight:600;}
+  .tab.on{color:var(--mint);}
+  .tab .cart-count{
+    position:absolute;top:0;right:calc(50% - 22px);background:var(--orange);color:#fff;
+    font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;padding:0 4px;
+  }
+
+  /* ===== 검색 화면 ===== */
+  .search-head{background:var(--mint);padding:14px 16px;display:flex;gap:10px;align-items:center;}
+  .search-head .back{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;}
+  .search-head input{
+    flex:1;border:none;border-radius:10px;padding:12px 14px;font-size:15px;font-family:inherit;outline:none;
+  }
+  .keyword{padding:14px 16px;}
+  .keyword h4{margin:0 0 12px;font-size:14px;color:#4a5158;}
+  .kw-list{display:flex;gap:8px;flex-wrap:wrap;}
+  .kw{background:#fff;border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;}
+
+  /* ===== 토스트 ===== */
+  .toast{
+    position:absolute;bottom:150px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:rgba(27,30,33,.92);color:#fff;padding:13px 22px;border-radius:24px;font-size:14px;
+    font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:60;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ===== 주문완료 화면 ===== */
+  .done{text-align:center;padding:70px 24px;}
+  .done .check{width:90px;height:90px;border-radius:50%;background:var(--mint);color:#fff;font-size:48px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;animation:pop .4s;}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .done h2{margin:0 0 8px;font-size:23px;}
+  .done p{color:var(--gray);font-size:15px;line-height:1.6;}
+  .done .eta{background:var(--mint-light);color:var(--mint-dark);font-weight:800;display:inline-block;padding:10px 20px;border-radius:12px;margin-top:20px;font-size:16px;}
+
+  .fadein{animation:fade .25s;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ 홈 ============ -->
+  <section class="screen active" id="scr-home">
+    <div class="topbar">
+      <div class="loc" onclick="toast('제주특별자치도 서귀포시 🍊')">
+        제주시 노형동 <small>▾</small>
+      </div>
+      <div class="search" onclick="go('search')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        흑돼지, 고기국수, 회… 뭐 드실래요?
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="hero">
+        <h2>우리가 어떤 민족입니까? 🏝️</h2>
+        <p>제주 향토음식부터 야식까지, 제주의 민족이 배달합니다</p>
+        <div class="tangerine">🍊</div>
+      </div>
+
+      <div class="section-title">무엇을 드시겠어요?</div>
+      <div class="cats" id="catGrid"></div>
+
+      <div class="section-title" id="listTitle">제주 인기 맛집 🔥</div>
+      <div class="filters" id="filters"></div>
+      <div id="storeList"></div>
+    </div>
+  </section>
+
+  <!-- ============ 가게 상세 ============ -->
+  <section class="screen" id="scr-detail">
+    <div class="scroll" id="detailScroll"></div>
+    <div class="pay-bar" id="detailPayBar" style="display:none;">
+      <button class="pay-btn" onclick="go('cart')">
+        <span id="detailCartCount">0</span>개 · <span id="detailCartTotal">0원</span> 담김 · 장바구니 보기
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ 검색 ============ -->
+  <section class="screen" id="scr-search">
+    <div class="search-head">
+      <button class="back" onclick="go('home')">←</button>
+      <input id="searchInput" placeholder="가게 또는 메뉴 검색" oninput="doSearch(this.value)">
+    </div>
+    <div class="scroll">
+      <div class="keyword" id="searchDefault">
+        <h4>제주에서 지금 뜨는 검색어 🍊</h4>
+        <div class="kw-list">
+          <span class="kw" onclick="quickSearch('흑돼지')">🐷 흑돼지</span>
+          <span class="kw" onclick="quickSearch('고기국수')">🍜 고기국수</span>
+          <span class="kw" onclick="quickSearch('전복')">🐚 전복</span>
+          <span class="kw" onclick="quickSearch('갈치')">🐟 갈치조림</span>
+          <span class="kw" onclick="quickSearch('회')">🍣 물회</span>
+          <span class="kw" onclick="quickSearch('카페')">☕ 카페</span>
+        </div>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+  </section>
+
+  <!-- ============ 장바구니 ============ -->
+  <section class="screen" id="scr-cart">
+    <div class="topbar"><div class="loc">장바구니</div></div>
+    <div class="scroll" id="cartScroll"></div>
+    <div class="pay-bar" id="cartPayBar" style="display:none;">
+      <button class="pay-btn" onclick="checkout()">
+        <span id="cartPayTotal">0원</span> 주문하기
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ 주문완료 ============ -->
+  <section class="screen" id="scr-done">
+    <div class="scroll">
+      <div class="done">
+        <div class="check">✓</div>
+        <h2>주문 완료!</h2>
+        <p>제주의 민족이 <b id="doneStore">맛집</b>에<br>주문을 전달했어요 🛵</p>
+        <div class="eta">🕒 예상 도착 40~50분</div>
+        <p style="margin-top:26px;font-size:13px;">한라산 넘어 열심히 배달 중… 조금만 기다려주세요!</p>
+        <button class="pay-btn" style="margin-top:30px;" onclick="go('home')">홈으로 돌아가기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 하단 네비 ============ -->
+  <nav class="tabbar">
+    <button class="tab on" data-tab="home" onclick="go('home')"><span class="ti">🏠</span><span class="tl">홈</span></button>
+    <button class="tab" data-tab="search" onclick="go('search')"><span class="ti">🔍</span><span class="tl">검색</span></button>
+    <button class="tab" data-tab="cart" onclick="go('cart')"><span class="ti">🛒</span><span class="tl">장바구니</span><span class="cart-count" id="tabCartCount" style="display:none;">0</span></button>
+    <button class="tab" data-tab="my" onclick="toast('마이제주는 준비 중이에요 🍊')"><span class="ti">🙂</span><span class="tl">마이제주</span></button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* =================== 데이터 =================== */
+const CATEGORIES = [
+  {id:'heukdwaeji',nm:'흑돼지',emo:'🐷'},
+  {id:'noodle',nm:'고기국수',emo:'🍜'},
+  {id:'seafood',nm:'해물',emo:'🦑'},
+  {id:'hoe',nm:'회·물회',emo:'🍣'},
+  {id:'galchi',nm:'갈치',emo:'🐟'},
+  {id:'cafe',nm:'카페·디저트',emo:'☕'},
+  {id:'chicken',nm:'치킨',emo:'🍗'},
+  {id:'nightsnack',nm:'제주야식',emo:'🌙'},
+];
+
+const STORES = [
+  {
+    id:1, nm:'돈사돈 흑돼지 본점', emo:'🐷', cat:'heukdwaeji',
+    rate:4.9, reviews:2145, time:'35-45분', fee:0, min:15000, new:false,
+    tags:['제주흑돼지','로컬맛집'],
+    menu:[
+      {g:'대표메뉴',items:[
+        {nm:'흑돼지 오겹살 (200g)',desc:'제주산 흑돼지 오겹살, 멜젓 포함',price:22000,emo:'🥓'},
+        {nm:'흑돼지 목살 (200g)',desc:'부드러운 목살 부위',price:21000,emo:'🍖'},
+        {nm:'모듬 세트 (400g)',desc:'오겹살+목살, 2인분 추천',price:41000,emo:'🍽️'},
+      ]},
+      {g:'식사·사이드',items:[
+        {nm:'된장찌개',desc:'구수한 강된장',price:7000,emo:'🥘'},
+        {nm:'냉면',desc:'식사 마무리로 딱',price:8000,emo:'🍜'},
+      ]},
+    ]
+  },
+  {
+    id:2, nm:'자매국수', emo:'🍜', cat:'noodle',
+    rate:4.8, reviews:3820, time:'25-35분', fee:2000, min:9000, new:false,
+    tags:['고기국수','제주3대국수'],
+    menu:[
+      {g:'국수',items:[
+        {nm:'고기국수',desc:'진한 돼지육수에 수육 고명 듬뿍',price:9000,emo:'🍜'},
+        {nm:'비빔국수',desc:'새콤달콤 제주식 비빔',price:9000,emo:'🌶️'},
+        {nm:'멸치국수',desc:'깔끔한 멸치육수',price:8000,emo:'🥢'},
+      ]},
+      {g:'사이드',items:[
+        {nm:'수육 한접시',desc:'부드러운 돼지수육',price:16000,emo:'🥩'},
+        {nm:'만두 (5개)',desc:'손만두',price:5000,emo:'🥟'},
+      ]},
+    ]
+  },
+  {
+    id:3, nm:'제주 바다 물회', emo:'🍣', cat:'hoe',
+    rate:4.7, reviews:1290, time:'30-40분', fee:3000, min:18000, new:true,
+    tags:['물회','자리돔'],
+    menu:[
+      {g:'물회',items:[
+        {nm:'한치물회',desc:'쫄깃한 제주 한치',price:16000,emo:'🦑'},
+        {nm:'자리물회',desc:'제주 향토 자리돔 물회',price:15000,emo:'🐟'},
+        {nm:'전복물회',desc:'싱싱한 전복 듬뿍',price:22000,emo:'🐚'},
+      ]},
+      {g:'회',items:[
+        {nm:'모듬회 (소)',desc:'제철 활어 모듬',price:45000,emo:'🍣'},
+      ]},
+    ]
+  },
+  {
+    id:4, nm:'명진전복', emo:'🐚', cat:'seafood',
+    rate:4.9, reviews:980, time:'40-50분', fee:3000, min:20000, new:false,
+    tags:['전복돌솥밥','예약필수맛집'],
+    menu:[
+      {g:'전복요리',items:[
+        {nm:'전복돌솥밥',desc:'전복 내장 넣어 지은 돌솥밥',price:19000,emo:'🍚'},
+        {nm:'전복구이',desc:'통전복 버터구이',price:28000,emo:'🐚'},
+        {nm:'전복죽',desc:'속 편한 보양식',price:15000,emo:'🥣'},
+      ]},
+    ]
+  },
+  {
+    id:5, nm:'해녀의 부엌 갈치', emo:'🐟', cat:'galchi',
+    rate:4.6, reviews:660, time:'35-45분', fee:2500, min:16000, new:false,
+    tags:['은갈치','갈치조림'],
+    menu:[
+      {g:'갈치요리',items:[
+        {nm:'갈치조림',desc:'제주 은갈치 통조림, 2인분',price:35000,emo:'🍲'},
+        {nm:'갈치구이',desc:'두툼한 은갈치 소금구이',price:28000,emo:'🐟'},
+        {nm:'고등어구이',desc:'제주 고등어 구이',price:18000,emo:'🐠'},
+      ]},
+    ]
+  },
+  {
+    id:6, nm:'귤꽃카페', emo:'☕', cat:'cafe',
+    rate:4.8, reviews:2410, time:'20-30분', fee:2000, min:8000, new:true,
+    tags:['감귤라떼','오션뷰'],
+    menu:[
+      {g:'시그니처',items:[
+        {nm:'제주 감귤라떼',desc:'제주 감귤청 듬뿍',price:6500,emo:'🍊'},
+        {nm:'한라봉 에이드',desc:'상큼한 한라봉',price:6800,emo:'🥤'},
+        {nm:'우도 땅콩 아이스크림',desc:'우도산 땅콩 토핑',price:5500,emo:'🍦'},
+      ]},
+      {g:'커피',items:[
+        {nm:'아메리카노',desc:'제주 로스팅 원두',price:4500,emo:'☕'},
+      ]},
+    ]
+  },
+  {
+    id:7, nm:'제주촌닭', emo:'🍗', cat:'chicken',
+    rate:4.5, reviews:1520, time:'30-40분', fee:2000, min:17000, new:false,
+    tags:['옛날통닭','제주막걸리'],
+    menu:[
+      {g:'치킨',items:[
+        {nm:'옛날 통닭',desc:'바삭한 가마솥 통닭',price:18000,emo:'🍗'},
+        {nm:'마농치킨',desc:'제주 마늘(마농) 양념',price:20000,emo:'🧄'},
+      ]},
+    ]
+  },
+  {
+    id:8, nm:'한밤의 오메기떡', emo:'🌙', cat:'nightsnack',
+    rate:4.7, reviews:540, time:'25-35분', fee:1500, min:9000, new:true,
+    tags:['오메기떡','야식'],
+    menu:[
+      {g:'제주 간식',items:[
+        {nm:'오메기떡 (10개)',desc:'제주 전통 팥고물 떡',price:12000,emo:'🍡'},
+        {nm:'빙떡 (5개)',desc:'메밀에 무나물, 담백한 향토간식',price:8000,emo:'🫓'},
+      ]},
+    ]
+  },
+];
+
+/* =================== 상태 =================== */
+let cart = [];            // {key,nm,price,emo,qty,storeId,storeNm}
+let currentFilter = 'all';
+const won = n => n.toLocaleString('ko-KR') + '원';
+
+/* =================== 홈 렌더 =================== */
+function renderCats(){
+  const g = document.getElementById('catGrid');
+  g.innerHTML = CATEGORIES.map(c=>`
+    <button class="cat" onclick="filterCat('${c.id}','${c.nm}')">
+      <span class="emo">${c.emo}</span><span class="nm">${c.nm}</span>
+    </button>`).join('');
+}
+
+function renderFilters(){
+  const chips = [{id:'all',nm:'전체'},{id:'rate',nm:'⭐ 별점순'},{id:'free',nm:'🛵 무료배달'},{id:'fast',nm:'⚡ 빠른배달'}];
+  document.getElementById('filters').innerHTML = chips.map(c=>`
+    <button class="chip ${currentFilter===c.id?'on':''}" onclick="setFilter('${c.id}')">${c.nm}</button>`).join('');
+}
+
+function setFilter(f){ currentFilter=f; renderFilters(); renderStores(); }
+
+let catFilter = null;
+function filterCat(id,nm){
+  catFilter = id;
+  document.getElementById('listTitle').textContent = nm + ' 맛집 🔥';
+  renderStores();
+  document.querySelector('#scr-home .scroll').scrollTo({top:300,behavior:'smooth'});
+  toast(nm + ' 카테고리를 골랐어요');
+}
+
+function renderStores(){
+  let list = STORES.slice();
+  if(catFilter) list = list.filter(s=>s.cat===catFilter);
+  if(currentFilter==='rate') list.sort((a,b)=>b.rate-a.rate);
+  if(currentFilter==='free') list = list.filter(s=>s.fee===0);
+  if(currentFilter==='fast') list.sort((a,b)=>parseInt(a.time)-parseInt(b.time));
+
+  const el = document.getElementById('storeList');
+  if(!list.length){ el.innerHTML = `<div class="empty"><div class="big">🏝️</div>조건에 맞는 가게가 없어요</div>`; return; }
+  el.innerHTML = list.map(storeCardHTML).join('');
+}
+
+function storeCardHTML(s){
+  return `<div class="store fadein" onclick="openStore(${s.id})">
+    <div class="thumb">${s.emo}</div>
+    <div class="info">
+      <div class="nm">${s.nm} ${s.new?'<span class="tag new">NEW</span>':''}</div>
+      <div class="meta"><span class="rate">⭐ ${s.rate}</span> (${s.reviews.toLocaleString()}) · ${s.time} · ${s.fee===0?'<span class="badge-free">무료배달</span>':'배달 '+won(s.fee)}</div>
+      <div class="meta" style="margin-top:3px;">최소주문 ${won(s.min)}</div>
+      <div class="tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+    </div>
+  </div>`;
+}
+
+/* =================== 가게 상세 =================== */
+let activeStore = null;
+function openStore(id){
+  activeStore = STORES.find(s=>s.id===id);
+  const s = activeStore;
+  let html = `
+    <div class="detail-head">
+      <button class="back" onclick="go('home')">←</button>
+      <div class="bigemo">${s.emo}</div>
+    </div>
+    <div class="detail-card">
+      <h1>${s.nm}</h1>
+      <div class="meta"><span class="rate" style="color:var(--star);font-weight:700;">⭐ ${s.rate}</span> · 리뷰 ${s.reviews.toLocaleString()}개</div>
+      <div class="sub">
+        <span>🛵 ${s.fee===0?'<b style="color:var(--mint-dark)">무료배달</b>':won(s.fee)}</span>
+        <span>🕒 ${s.time}</span>
+        <span>최소 ${won(s.min)}</span>
+      </div>
+    </div>`;
+  s.menu.forEach(grp=>{
+    html += `<div class="menu-group-title">${grp.g}</div>`;
+    grp.items.forEach(m=>{
+      const key = s.id+'-'+m.nm;
+      html += `<div class="menu-item" onclick="addToCart(${s.id},'${encodeURIComponent(m.nm)}',${m.price},'${m.emo}')">
+        <div class="mi-info">
+          <div class="mi-nm">${m.nm}</div>
+          <div class="mi-desc">${m.desc}</div>
+          <div class="mi-price">${won(m.price)}</div>
+        </div>
+        <div class="mi-thumb">${m.emo}</div>
+      </div>`;
+    });
+  });
+  html += `<div style="height:20px"></div>`;
+  document.getElementById('detailScroll').innerHTML = html;
+  document.getElementById('detailScroll').scrollTo(0,0);
+  go('detail');
+  updateDetailBar();
+}
+
+/* =================== 장바구니 로직 =================== */
+function addToCart(storeId, nmEnc, price, emo){
+  const nm = decodeURIComponent(nmEnc);
+  const store = STORES.find(s=>s.id===storeId);
+
+  // 다른 가게 메뉴가 담겨 있으면 확인
+  if(cart.length && cart[0].storeId !== storeId){
+    if(!confirm('다른 가게의 메뉴가 담겨 있어요.\n장바구니를 비우고 새로 담을까요?')) return;
+    cart = [];
+  }
+  const key = storeId+'-'+nm;
+  const found = cart.find(c=>c.key===key);
+  if(found) found.qty++;
+  else cart.push({key,nm,price,emo,qty:1,storeId,storeNm:store.nm});
+
+  updateAllBadges();
+  updateDetailBar();
+  toast(`🛒 ${nm} 담았어요`);
+}
+
+function changeQty(key,delta){
+  const item = cart.find(c=>c.key===key);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty<=0) cart = cart.filter(c=>c.key!==key);
+  renderCart();
+  updateAllBadges();
+}
+
+function cartCount(){ return cart.reduce((a,c)=>a+c.qty,0); }
+function cartSubtotal(){ return cart.reduce((a,c)=>a+c.price*c.qty,0); }
+function cartFee(){ if(!cart.length) return 0; const s=STORES.find(x=>x.id===cart[0].storeId); return s?s.fee:0; }
+
+function updateAllBadges(){
+  const cnt = cartCount();
+  const badge = document.getElementById('tabCartCount');
+  badge.style.display = cnt?'flex':'none';
+  badge.textContent = cnt;
+}
+
+function updateDetailBar(){
+  const bar = document.getElementById('detailPayBar');
+  const relevant = activeStore && cart.length && cart[0].storeId===activeStore.id;
+  if(relevant){
+    bar.style.display='block';
+    document.getElementById('detailCartCount').textContent = cartCount();
+    document.getElementById('detailCartTotal').textContent = won(cartSubtotal());
+  } else bar.style.display='none';
+}
+
+function renderCart(){
+  const wrap = document.getElementById('cartScroll');
+  const bar = document.getElementById('cartPayBar');
+  if(!cart.length){
+    wrap.innerHTML = `<div class="empty"><div class="big">🛒</div>장바구니가 비어 있어요<br><br>
+      <button class="chip" style="background:var(--mint);color:#fff;border:none;padding:12px 20px;" onclick="go('home')">맛집 보러가기</button></div>`;
+    bar.style.display='none';
+    return;
+  }
+  const sub = cartSubtotal(), fee = cartFee();
+  let html = `<div style="padding:14px 16px 4px;font-weight:800;font-size:15px;">🏝️ ${cart[0].storeNm}</div>`;
+  cart.forEach(c=>{
+    html += `<div class="cart-line">
+      <div class="c-emo">${c.emo}</div>
+      <div class="c-info"><div class="c-nm">${c.nm}</div><div class="c-price">${won(c.price)}</div></div>
+      <div class="qty">
+        <button onclick="changeQty('${c.key}',-1)">−</button>
+        <span>${c.qty}</span>
+        <button onclick="changeQty('${c.key}',1)">+</button>
+      </div>
+    </div>`;
+  });
+  html += `<div class="summary">
+    <div class="row"><span>주문금액</span><span>${won(sub)}</span></div>
+    <div class="row"><span>배달비</span><span>${fee===0?'무료':won(fee)}</span></div>
+    <div class="row total"><span>총 결제금액</span><span>${won(sub+fee)}</span></div>
+  </div>`;
+
+  const store = STORES.find(s=>s.id===cart[0].storeId);
+  if(sub < store.min){
+    html += `<div style="text-align:center;color:var(--orange);font-weight:700;font-size:13px;padding:0 16px 12px;">
+      최소주문금액까지 ${won(store.min-sub)} 남았어요</div>`;
+  }
+  wrap.innerHTML = html;
+
+  bar.style.display='block';
+  const canOrder = sub >= store.min;
+  const btn = bar.querySelector('.pay-btn');
+  btn.disabled = !canOrder;
+  document.getElementById('cartPayTotal').textContent = canOrder ? won(sub+fee) : `최소 ${won(store.min)}`;
+}
+
+function checkout(){
+  if(!cart.length) return;
+  document.getElementById('doneStore').textContent = cart[0].storeNm;
+  cart = [];
+  updateAllBadges();
+  go('done');
+}
+
+/* =================== 검색 =================== */
+function doSearch(q){
+  q = q.trim().toLowerCase();
+  const def = document.getElementById('searchDefault');
+  const res = document.getElementById('searchResults');
+  if(!q){ def.style.display='block'; res.innerHTML=''; return; }
+  def.style.display='none';
+  const list = STORES.filter(s=>{
+    if(s.nm.toLowerCase().includes(q)) return true;
+    if(s.tags.some(t=>t.toLowerCase().includes(q))) return true;
+    return s.menu.some(g=>g.items.some(m=>m.nm.toLowerCase().includes(q)));
+  });
+  res.innerHTML = list.length
+    ? list.map(storeCardHTML).join('')
+    : `<div class="empty"><div class="big">🔍</div>'${q}' 검색 결과가 없어요</div>`;
+}
+function quickSearch(kw){
+  document.getElementById('searchInput').value = kw;
+  doSearch(kw);
+}
+
+/* =================== 네비게이션 =================== */
+function go(scr){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('scr-'+scr).classList.add('active');
+
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  const tabMap = {home:'home',search:'search',cart:'cart'};
+  if(tabMap[scr]){
+    const t = document.querySelector(`.tab[data-tab="${tabMap[scr]}"]`);
+    if(t) t.classList.add('on');
+  }
+  if(scr==='cart') renderCart();
+  if(scr==='search') setTimeout(()=>document.getElementById('searchInput').focus(),100);
+  window.scrollTo(0,0);
+}
+
+/* =================== 토스트 =================== */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+/* =================== 초기화 =================== */
+renderCats();
+renderFilters();
+renderStores();
+</script>
+</body>
+</html>
